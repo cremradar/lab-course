@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Лабораторное занятие: верно или неверно?</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#EEF2F6;--panel:#FFFFFF;--ink:#14213D;--muted:#55627A;--line:#D3DBE6;
+  --yes:#0F766E;--yes-bg:#DDF3EF;--no:#B4233C;--no-bg:#FBE3E7;--accent:#2B4C8C;
+  box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0F1623;--panel:#18223A;--ink:#E6ECF5;--muted:#9AA8C2;--line:#2B3856;
+  --yes:#4FD1BF;--yes-bg:#12332F;--no:#FF8CA0;--no-bg:#3A1A24;--accent:#8EA9E8;}}
+:root[data-theme="dark"]{
+  --bg:#0F1623;--panel:#18223A;--ink:#E6ECF5;--muted:#9AA8C2;--line:#2B3856;
+  --yes:#4FD1BF;--yes-bg:#12332F;--no:#FF8CA0;--no-bg:#3A1A24;--accent:#8EA9E8;}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Golos Text",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;line-height:1.5}
+main{max-width:680px;margin:0 auto;padding:20px 18px 48px}
+h1{font-size:clamp(1.5rem,5vw,2.1rem);line-height:1.15;margin:8px 0 6px;font-weight:800;letter-spacing:-.01em}
+.sub{color:var(--muted);margin:0 0 20px}
+.bar{display:flex;gap:4px;margin:0 0 6px}
+.seg{flex:1;height:8px;border-radius:4px;background:var(--line)}
+.seg.cur{background:var(--accent)}.seg.ok{background:var(--yes)}.seg.bad{background:var(--no)}
+.count{color:var(--muted);font-size:.9rem;margin:0 0 14px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:22px 20px}
+.stmt{font-size:clamp(1.2rem,4.2vw,1.55rem);line-height:1.35;font-weight:700;margin:0 0 20px}
+.btns{display:flex;gap:10px}
+button{font:inherit;cursor:pointer;border-radius:10px;border:2px solid var(--line);background:var(--panel);color:var(--ink);padding:14px 16px;font-weight:700;font-size:1.05rem}
+button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.btns button{flex:1}
+.btns button.t:hover:not(:disabled){border-color:var(--yes)}
+.btns button.f:hover:not(:disabled){border-color:var(--no)}
+.btns button:disabled{cursor:default}
+.btns button.pick{border-width:2px}
+.btns button.t.pick{border-color:var(--yes)}.btns button.f.pick{border-color:var(--no)}
+.res{margin-top:18px;padding:16px;border-radius:10px;animation:in .25s ease-out}
+.res.ok{background:var(--yes-bg)}.res.bad{background:var(--no-bg)}
+.res b.v{display:block;font-size:1.05rem;margin-bottom:4px}
+.res.ok b.v{color:var(--yes)}.res.bad b.v{color:var(--no)}
+.res p{margin:0}
+.next{margin-top:16px;width:100%;background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.score{font-size:clamp(2.4rem,10vw,3.6rem);font-weight:800;line-height:1;margin:6px 0 8px}
+.rev{list-style:none;padding:0;margin:20px 0 0}
+.rev li{border-top:1px solid var(--line);padding:14px 0}
+.rev .tag{display:inline-block;font-size:.85rem;font-weight:700;padding:2px 8px;border-radius:6px;margin-right:6px}
+.tag.ok{background:var(--yes-bg);color:var(--yes)}.tag.bad{background:var(--no-bg);color:var(--no)}
+.rev p{margin:6px 0 0;color:var(--muted)}
+.rev strong{font-weight:700}
+.again{margin-top:8px;background:var(--accent);border-color:var(--accent);color:#fff}
+@keyframes in{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.res{animation:none}}
+@media (max-width:420px){.btns{flex-direction:column}}
+</style>
+</head>
+<body>
+<main>
+  <h1>Лабораторное занятие: верно или неверно?</h1>
+  <p class="sub">15 утверждений для спора. Выберите ответ, потом смотрите разбор.</p>
+  <div class="bar" id="bar" aria-hidden="true"></div>
+  <p class="count" id="count"></p>
+  <div id="view"></div>
+</main>
+<script>
+var Q=[
+{s:"Лабораторное занятие по психолого-педагогическим дисциплинам — это семинар, только с тестами и бланками.",a:false,e:"Главное отличие в том, что студент сам получает и обрабатывает данные по заданной процедуре. Если студенты просто обсуждают статью, это уже семинар."},
+{s:"Если вся группа получила одинаковый результат, лабораторная работа выполнена идеально.",a:false,e:"В работе с людьми одинаковые результаты подозрительны: либо списали, либо инструкция слишком шаблонная. Разброс данных — это материал для анализа."},
+{s:"Тип лабораторного занятия определяется не темой, а степенью свободы студента.",a:true,e:"Одну и ту же работу можно дать как «проведи методику по инструкции» или как «придумай, как проверить гипотезу». Тема та же, а решает студент уже разное."},
+{s:"Право на ошибку на лабораторном занятии — это поблажка студентам.",a:false,e:"Это часть дизайна занятия. Если ошибиться негде, студент не научится замечать и разбирать расхождения. Но ошибки должны быть безопасными для людей, а не только для оценки."},
+{s:"Подробная инструкция к лабораторной работе вредна для обучения.",a:false,e:"Новичку она нужна, иначе он перегружен. Проблема начинается, когда помощь не снимают со временем: преподаватель сначала показывает, потом сопровождает, потом отпускает."},
+{s:"Студент верно посчитал статистику, но не может объяснить, что она значит. Лабораторную работу он освоил.",a:false,e:"Оценивается и глубина интерпретации, а не только расчёт. Цифры без смысла — это работа калькулятора, а не будущего специалиста."},
+{s:"Если студенты проводят диагностику друг на друге, полученные данные можно считать валидными.",a:false,e:"Одногруппники знают друг друга, играют роли и подстраиваются. Для отработки навыка это подходит, а как источник данных о реальных школьниках нет. Поэтому растёт интерес к работе в реальных школах и центрах."},
+{s:"Результат диагностики можно сразу сообщить однокурснику, как только посчитал.",a:false,e:"Студент не практикующий психолог. Сказать «у тебя высокая тревожность» без подготовки — это нарушение этики и психологической безопасности, даже если задание учебное."},
+{s:"Намеренное нарушение процедуры теста — один из лучших способов понять, зачем она нужна.",a:true,e:"Если один раз сознательно изменить условия (подсказка, другое время, давление) и сравнить результаты, видно, как процедура влияет на данные. Главное — заранее запланировать разбор."},
+{s:"Оценивать лабораторную работу достаточно по итоговому отчёту.",a:false,e:"Отчёт показывает результат, а не то, как студент работал: соблюдал ли протокол, как вёл себя с испытуемым. Процесс нужно оценивать отдельно, например по чек-листу наблюдений."},
+{s:"Тест-допуск в начале занятия нужен не только для контроля, но и для обучения.",a:true,e:"Чтобы ответить, студент вспоминает материал, а это закрепляет его лучше простого перечитывания. Плюс тест-допуск мотивирует готовиться заранее."},
+{s:"ИИ в роли «виртуального испытуемого» даёт тот же опыт, что и живой человек.",a:false,e:"Для отработки диалога и сложных ситуаций подходит. Но у ИИ нет настоящей вариативности и последствий для реального человека, поэтому теряются работа с этикой и непредсказуемостью."},
+{s:"Рефлексия в конце занятия — такая же часть лабораторной работы, как и сам эксперимент.",a:true,e:"Без рефлексии студент выполняет действия и не связывает их с теорией. Поэтому на неё закладывают отдельное время, а не «если останется»."},
+{s:"Хороший преподаватель на лабораторном занятии в основном даёт правильные ответы.",a:false,e:"Его роль — консультант и супервизор: следить за процедурой и этикой, задавать вопросы. Чем больше он решает за студента, тем меньше занятие отличается от демонстрации."},
+{s:"Лабораторные занятия нужны будущим исследователям, а будущим преподавателям вуза они ни к чему.",a:false,e:"Преподаватель должен уметь подобрать диагностический инструментарий, оценить его надёжность и сам спроектировать лабораторное занятие для студентов."}
+];
+var i=0,ans=[],shown=false;
+var $v=document.getElementById("view"),$b=document.getElementById("bar"),$c=document.getElementById("count");
+function esc(t){return t.replace(/&/g,"&amp;").replace(/</g,"&lt;")}
+function bar(){
+  var h="";
+  for(var k=0;k<Q.length;k++){
+    var c="seg";
+    if(ans[k]!==undefined){c+=(ans[k]===Q[k].a)?" ok":" bad"}else if(k===i&&i<Q.length){c+=" cur"}
+    h+='<div class="'+c+'"></div>';
+  }
+  $b.innerHTML=h;
+}
+function render(){
+  bar();
+  if(i>=Q.length){return done()}
+  var q=Q[i],u=ans[i];
+  $c.textContent="Утверждение "+(i+1)+" из "+Q.length;
+  var h='<div class="card"><p class="stmt">'+esc(q.s)+'</p><div class="btns">';
+  h+='<button class="t'+(u===true?" pick":"")+'" data-v="1"'+(shown?" disabled":"")+'>Верно</button>';
+  h+='<button class="f'+(u===false?" pick":"")+'" data-v="0"'+(shown?" disabled":"")+'>Неверно</button></div>';
+  if(shown){
+    var ok=(u===q.a);
+    h+='<div class="res '+(ok?"ok":"bad")+'" role="status"><b class="v">'+(ok?"Вы угадали. ":"Не угадали. ")+"Это "+(q.a?"верно":"неверно")+'.</b><p>'+esc(q.e)+'</p></div>';
+    h+='<button class="next" id="nx">'+(i===Q.length-1?"Показать итог":"Следующее утверждение")+'</button>';
+  }
+  h+='</div>';
+  $v.innerHTML=h;
+  var bs=$v.querySelectorAll(".btns button");
+  for(var k=0;k<bs.length;k++){bs[k].onclick=function(){pick(this.getAttribute("data-v")==="1")}}
+  var nx=document.getElementById("nx");
+  if(nx){nx.onclick=function(){i++;shown=false;render();window.scrollTo(0,0)};nx.focus({preventScroll:false})}
+}
+function pick(v){ans[i]=v;shown=true;render()}
+function done(){
+  var s=0,k;
+  for(k=0;k<Q.length;k++){if(ans[k]===Q[k].a)s++}
+  $c.textContent="Готово";
+  var h='<div class="card"><div class="score">'+s+' из '+Q.length+'</div><p class="sub" style="margin:0">'
+    +(s>=12?"Вы хорошо чувствуете логику лабораторного занятия.":s>=8?"Неплохо, но часть формулировок вас поймала.":"Утверждения получились коварными. Посмотрите разбор ниже.")+'</p>';
+  h+='<ol class="rev">';
+  for(k=0;k<Q.length;k++){
+    var ok=ans[k]===Q[k].a;
+    h+='<li><span class="tag '+(ok?"ok":"bad")+'">'+(ok?"Верно угадано":"Ошибка")+'</span><strong>'+esc(Q[k].s)+'</strong><p>Ответ: '+(Q[k].a?"верно":"неверно")+'. '+esc(Q[k].e)+'</p></li>';
+  }
+  h+='</ol><button class="next again" id="re">Пройти заново</button></div>';
+  $v.innerHTML=h;
+  document.getElementById("re").onclick=function(){i=0;ans=[];shown=false;render();window.scrollTo(0,0)};
+}
+render();
+</script>
+</body>
+</html>
